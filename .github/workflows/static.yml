@@ -26,12 +26,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     runs-on: ubuntu-latest
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -39,22 +41,30 @@ jobs:
           node-version: '24'
           package-manager-cache: false
 
-      - name: Fetch API data
-        env:
-          PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
+      - name: Fetch weather and marine data
         run: node fetch-data.mjs
 
-      - name: Save JSON back to repository
+      - name: Generate beach images
+        id: images
+        continue-on-error: true
+        env:
+          PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
+        run: node generate-beach-images.mjs
+
+      - name: Save forecasts and images to repository
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add api-data.json
+          if [ -f beach-images.json ]; then git add beach-images.json; fi
+          if [ -d images ]; then git add -- images; fi
 
           if git diff --cached --quiet; then
-            echo "API data has not changed."
+            echo "No saved data has changed."
           else
-            git commit -m "Update API data"
+            git commit -m "Update beach forecasts and images"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
 
@@ -76,3 +86,9 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Report an incomplete image run
+        if: ${{ steps.images.outcome == 'failure' }}
+        run: |
+          echo "Image generation was incomplete. Saved progress and forecasts have been published. Rerun the workflow to resume."
+          exit 1
