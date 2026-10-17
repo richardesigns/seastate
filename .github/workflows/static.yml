@@ -39,6 +39,8 @@ jobs:
           package-manager-cache: false
 
       - name: Fetch API data
+        env:
+          PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
         run: node fetch-data.mjs
 
       - name: Save JSON back to repository
