@@ -1,3 +1,9 @@
+const apiKey = process.env.PRIVATE_API_KEY;
+
+if (!apiKey) {
+    throw new Error("PRIVATE_API_KEY has not been configured.");
+}
+
 import { writeFile } from "node:fs/promises";
 
 const beaches = {
@@ -130,5 +136,8 @@ await writeFile(
     JSON.stringify(output, null, 2) + "\n",
     "utf8"
 );
+
+
+// Image generation
 
 console.log("api-data.json updated successfully for all beaches.");
