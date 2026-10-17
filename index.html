@@ -177,134 +177,498 @@
 }
   </script>
   <script>
-  (() => {
-    'use strict';
-    const root = document.getElementById('seastate-selector');
-    const data = JSON.parse(document.getElementById('ss-beach-data').textContent);
-    const form = root.querySelector('#ss-location-form');
-    const keys = ['nation', 'region', 'area', 'beach'];
-    const selects = keys.map(key => root.querySelector('#ss-' + key));
-    const fields = keys.map(key => root.querySelector('#ss-' + key + '-field'));
-    const placeholders = ['Choose a nation', 'Choose a region', 'Choose an area', 'Choose a beach'];
-    const status = root.querySelector('#ss-status');
-    const submit = root.querySelector('#ss-submit');
-    const reset = root.querySelector('#ss-reset');
-    const result = root.querySelector('#ss-result');
-    const collator = new Intl.Collator('en-GB', { sensitivity: 'base', numeric: true });
-    const alphabetical = values => [...values].sort(collator.compare);
-    const countBeaches = value => Array.isArray(value)
-      ? value.length : Object.values(value).reduce((total, child) => total + countBeaches(child), 0);
-    root.querySelector('#ss-count').textContent = countBeaches(data).toLocaleString('en-GB') + ' coastal locations';
+(() => {
+  'use strict';
 
-    function fill(index, entries) {
-      const select = selects[index];
-      select.replaceChildren(new Option(placeholders[index], ''));
-      for (const entry of entries) select.add(new Option(entry.label, entry.value));
-      select.disabled = false;
-      fields[index].hidden = false;
+  const root = document.getElementById('seastate-selector');
+  if (!root) return;
+
+  const data = JSON.parse(document.getElementById('ss-beach-data').textContent);
+  const form = root.querySelector('#ss-location-form');
+  const keys = ['nation', 'region', 'area', 'beach'];
+  const selects = keys.map(key => root.querySelector('#ss-' + key));
+  const fields = keys.map(key => root.querySelector('#ss-' + key + '-field'));
+  const placeholders = [
+    'Choose a nation',
+    'Choose a region',
+    'Choose an area',
+    'Choose a beach'
+  ];
+
+  const status = root.querySelector('#ss-status');
+  const submit = root.querySelector('#ss-submit');
+  const reset = root.querySelector('#ss-reset');
+  const result = root.querySelector('#ss-result');
+
+  const collator = new Intl.Collator('en-GB', {
+    sensitivity: 'base',
+    numeric: true
+  });
+
+  const alphabetical = values => [...values].sort(collator.compare);
+
+  const countBeaches = value => Array.isArray(value)
+    ? value.length
+    : Object.values(value).reduce(
+        (total, child) => total + countBeaches(child), 0
+      );
+
+  root.querySelector('#ss-count').textContent =
+    countBeaches(data).toLocaleString('en-GB') + ' coastal locations';
+
+  // Create the forecast display inside the existing result panel.
+  const forecastPanel = document.createElement('div');
+  forecastPanel.id = 'ss-forecast';
+  forecastPanel.setAttribute('aria-live', 'polite');
+  result.append(forecastPanel);
+
+  let controller = null;
+  let requestId = 0;
+  let selectedForecast = null;
+
+  const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  });
+
+  const numberFormatter = new Intl.NumberFormat('en-GB', {
+    maximumFractionDigits: 2
+  });
+
+  const normalise = value => String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  // Interpret API timestamps using the timezone offset saved in the JSON.
+  function apiDate(value, response) {
+    if (typeof value === 'number') {
+      return new Date(value * 1000);
     }
 
-    function clearAfter(index) {
-      for (let i = index + 1; i < selects.length; i++) {
-        selects[i].replaceChildren(new Option(placeholders[i], ''));
-        selects[i].disabled = true;
-        fields[i].hidden = true;
-      }
-      root.querySelector('#ss-beach-hint').textContent = '';
-      submit.disabled = true;
-      result.hidden = true;
-      root.querySelector('#ss-result-title').textContent = '';
-      root.querySelector('#ss-result-path').textContent = '';
+    if (/(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
+      return new Date(value);
     }
 
-    function currentNode(index) {
-      let node = data;
-      for (let i = 0; i <= index; i++) {
-        if (!selects[i].value || !Object.prototype.hasOwnProperty.call(node, selects[i].value)) return null;
-        node = node[selects[i].value];
-      }
-      return node;
+    return new Date(
+      Date.parse(value + 'Z') -
+      (response.utc_offset_seconds || 0) * 1000
+    );
+  }
+
+  // Match selector labels/IDs to the beach keys in api-data.json.
+  function findSavedBeach(saved, selection) {
+    const entries = Object.entries(saved.beaches || {});
+
+    if (selection.forecastKey) {
+      const exact = entries.find(
+        ([key]) => key === selection.forecastKey
+      );
+      if (exact) return exact[1];
     }
 
-    function getSelection() {
-      const beaches = currentNode(2);
-      if (!Array.isArray(beaches)) return null;
-      const beach = beaches.find(item => item.id === selects[3].value);
-      if (!beach) return null;
-      return {
-        country: 'UK', nation: selects[0].value, region: selects[1].value,
-        area: selects[2].value, beach: beach.name, beachId: beach.id
-      };
+    const names = [selection.beach, selection.beachId]
+      .map(value => ' ' + normalise(value) + ' ');
+
+    const matches = entries.filter(([key]) =>
+      names.some(name =>
+        name.includes(' ' + normalise(key) + ' ')
+      )
+    );
+
+    // Handles labels such as "Maenporth (Falmouth)" and "Sidmouth Beach".
+    return matches.length === 1 ? matches[0][1] : null;
+  }
+
+  function renderForecast(beach, updatedAt) {
+    const weather = beach.weather || {};
+    const marine = beach.marine || {};
+    const weatherTimes = weather.hourly?.time;
+
+    if (!Array.isArray(weatherTimes)) {
+      throw new Error('Saved weather data is missing for this beach.');
     }
 
-    function changed(index) {
-      clearAfter(index);
-      reset.hidden = !selects[0].value;
-      if (index === 3) {
-        submit.disabled = !getSelection();
-        status.textContent = submit.disabled ? 'Choose a beach to continue.' : 'Ready — use this beach to confirm your choice.';
-        return;
-      }
-      const node = currentNode(index);
-      if (!node) {
-        status.textContent = index === 0 ? 'Choose a nation to get started.' : placeholders[index] + ' to continue.';
-        return;
-      }
-      if (index === 2) {
-        const beaches = [...node].sort((a, b) => collator.compare(a.name, b.name));
-        fill(3, beaches.map(beach => ({ label: beach.name, value: beach.id })));
-        root.querySelector('#ss-beach-hint').textContent = beaches.length + ' locations in ' + selects[2].value + '.';
-        status.textContent = 'Choose your beach in ' + selects[2].value + '.';
-      } else {
-        fill(index + 1, alphabetical(Object.keys(node)).map(name => ({ label: name, value: name })));
-        status.textContent = index === 0 ? 'Choose a region in ' + selects[0].value + '.' : 'Choose a county or coastal area in ' + selects[1].value + '.';
-      }
+    const now = Date.now();
+
+    const rows = weatherTimes
+      .map((time, index) => ({
+        index,
+        date: apiDate(time, weather)
+      }))
+      .filter(row => row.date.getTime() >= now)
+      .slice(0, 24);
+
+    if (!rows.length) {
+      throw new Error(
+        'The saved forecast has no upcoming hours. ' +
+        'Please try again after the next update.'
+      );
     }
 
-    fill(0, Object.keys(data).map(name => ({ label: name, value: name })));
-    selects.forEach((select, index) => select.addEventListener('change', () => changed(index)));
+    // Match marine readings to weather readings by timestamp.
+    const marineIndexes = new Map(
+      (marine.hourly?.time || []).map((time, index) => [
+        apiDate(time, marine).getTime(),
+        index
+      ])
+    );
 
-    form.addEventListener('submit', event => {
-      event.preventDefault();
+    const columns = [
+      ['Air', weather, 'temperature_2m', '°C'],
+      ['Rain chance', weather, 'precipitation_probability', '%'],
+      ['Wind', weather, 'wind_speed_10m', 'mph'],
+      ['Gusts', weather, 'wind_gusts_10m', 'mph'],
+      ['Waves', marine, 'wave_height', 'm'],
+      ['Wave period', marine, 'wave_period', 's'],
+      ['Swell', marine, 'swell_wave_height', 'm'],
+      ['Sea', marine, 'sea_surface_temperature', '°C']
+    ];
+
+    const heading = document.createElement('h3');
+    heading.textContent = 'Next 24 forecast hours';
+
+    const note = document.createElement('p');
+    const updated = new Date(updatedAt);
+
+    note.textContent =
+      (Number.isFinite(updated.getTime())
+        ? 'Updated ' + dateFormatter.format(updated) + '. '
+        : '') +
+      'Times shown in UK local time. — means data is unavailable.';
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText =
+      'max-width:100%;overflow:auto;max-height:32rem;';
+    wrap.tabIndex = 0;
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute(
+      'aria-label',
+      'Hourly weather and marine forecast'
+    );
+
+    const table = document.createElement('table');
+    table.className = 'ss-forecast-table';
+    table.style.cssText = 'width:100%;border-collapse:collapse;';
+
+    const head = table.createTHead().insertRow();
+
+    const headings = [
+      'Time',
+      ...columns.map(([label, source, key, unit]) =>
+        label + ' (' + (source.hourly_units?.[key] || unit) + ')'
+      )
+    ];
+
+    headings.forEach(label => {
+      const cell = document.createElement('th');
+      cell.scope = 'col';
+      cell.textContent = label;
+      cell.style.cssText =
+        'padding:.65rem;text-align:left;white-space:nowrap;' +
+        'border-bottom:1px solid #ddd;';
+      head.append(cell);
+    });
+
+    const body = table.createTBody();
+
+    rows.forEach(({ index, date }) => {
+      const row = body.insertRow();
+      const marineIndex = marineIndexes.get(date.getTime());
+
+      const values = [
+        dateFormatter.format(date),
+        ...columns.map(([, source, key]) => {
+          const readingIndex = source === weather ? index : marineIndex;
+          const value = source.hourly?.[key]?.[readingIndex];
+
+          return Number.isFinite(value)
+            ? numberFormatter.format(value)
+            : '—';
+        })
+      ];
+
+      values.forEach(value => {
+        const cell = row.insertCell();
+        cell.textContent = value;
+        cell.style.cssText =
+          'padding:.65rem;text-align:left;white-space:nowrap;' +
+          'border-bottom:1px solid #eee;';
+      });
+    });
+
+    wrap.append(table);
+    forecastPanel.replaceChildren(heading, note, wrap);
+  }
+
+  async function openBeach(selection, focus = false) {
+    // Cancel any previous request when the selected beach changes.
+    controller?.abort();
+    controller = new AbortController();
+
+    const thisController = controller;
+    const thisRequest = ++requestId;
+    selectedForecast = null;
+
+    root.querySelector('#ss-result-title').textContent = selection.beach;
+
+    root.querySelector('#ss-result-path').textContent = [
+      selection.country,
+      selection.nation,
+      selection.region,
+      selection.area
+    ].join(' / ');
+
+    result.hidden = false;
+    forecastPanel.textContent = 'Loading saved forecast…';
+    status.textContent =
+      'Loading forecast for ' + selection.beach + '…';
+
+    if (focus) result.focus();
+
+    try {
+      // Read the JSON deployed with your website.
+      const response = await fetch('./api-data.json', {
+        cache: 'no-store',
+        signal: thisController.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          'Could not load api-data.json (HTTP ' +
+          response.status + ').'
+        );
+      }
+
+      const saved = await response.json();
+
+      // Ignore responses for an earlier selection.
+      if (thisRequest !== requestId) return;
+
+      const beach = findSavedBeach(saved, selection);
+
+      if (!beach) {
+        throw new Error(
+          'No saved forecast was found for ' + selection.beach + '.'
+        );
+      }
+
+      renderForecast(beach, saved.updated_at);
+      selectedForecast = beach;
+
+      status.textContent = selection.beach + ' forecast loaded.';
+
+      // Other scripts can listen for this event to access the full data.
+      form.dispatchEvent(new CustomEvent('seastate:location-selected', {
+        bubbles: true,
+        detail: {
+          ...selection,
+          forecast: beach,
+          updatedAt: saved.updated_at
+        }
+      }));
+    } catch (error) {
+      if (
+        thisController.signal.aborted ||
+        thisRequest !== requestId
+      ) return;
+
+      forecastPanel.textContent = error.message;
+      status.textContent =
+        'Forecast could not be loaded. Use this beach again to retry.';
+
+      console.error('SeaState forecast:', error);
+    } finally {
+      if (thisRequest === requestId) controller = null;
+    }
+  }
+
+  function fill(index, entries) {
+    const select = selects[index];
+
+    select.replaceChildren(new Option(placeholders[index], ''));
+
+    for (const entry of entries) {
+      select.add(new Option(entry.label, entry.value));
+    }
+
+    select.disabled = false;
+    fields[index].hidden = false;
+  }
+
+  function clearAfter(index) {
+    controller?.abort();
+    controller = null;
+    requestId++;
+    selectedForecast = null;
+
+    for (let i = index + 1; i < selects.length; i++) {
+      selects[i].replaceChildren(new Option(placeholders[i], ''));
+      selects[i].disabled = true;
+      fields[i].hidden = true;
+    }
+
+    root.querySelector('#ss-beach-hint').textContent = '';
+    submit.disabled = true;
+    result.hidden = true;
+    root.querySelector('#ss-result-title').textContent = '';
+    root.querySelector('#ss-result-path').textContent = '';
+    forecastPanel.replaceChildren();
+  }
+
+  function currentNode(index) {
+    let node = data;
+
+    for (let i = 0; i <= index; i++) {
+      if (
+        !selects[i].value ||
+        !Object.prototype.hasOwnProperty.call(node, selects[i].value)
+      ) return null;
+
+      node = node[selects[i].value];
+    }
+
+    return node;
+  }
+
+  function getSelection() {
+    const beaches = currentNode(2);
+    if (!Array.isArray(beaches)) return null;
+
+    const beach = beaches.find(item => item.id === selects[3].value);
+    if (!beach) return null;
+
+    return {
+      country: 'UK',
+      nation: selects[0].value,
+      region: selects[1].value,
+      area: selects[2].value,
+      beach: beach.name,
+      beachId: beach.id,
+      forecastKey: beach.forecastKey || null
+    };
+  }
+
+  function changed(index) {
+    clearAfter(index);
+    reset.hidden = !selects[0].value;
+
+    if (index === 3) {
       const selection = getSelection();
-      if (!selection || !form.reportValidity()) return;
-      root.querySelector('#ss-result-title').textContent = selection.beach;
-      root.querySelector('#ss-result-path').textContent = [selection.country, selection.nation, selection.region, selection.area].join(' / ');
-      result.hidden = false;
-      status.textContent = selection.beach + ' selected.';
-      result.focus();
-      // Integration hook: listen for this event to fetch forecasts or save a preference.
-      // Nothing is sent to a server by this demo.
-      form.dispatchEvent(new CustomEvent('seastate:location-selected', { bubbles: true, detail: selection }));
-    });
+      submit.disabled = !selection;
 
-    form.addEventListener('reset', event => {
-      // Handle all resets here so hidden/disabled state stays in sync with values.
-      event.preventDefault();
-      selects[0].value = '';
-      clearAfter(0);
-      reset.hidden = true;
-      status.textContent = 'Choose a nation to get started.';
-      selects[0].focus();
-    });
+      if (selection) {
+        void openBeach(selection);
+      } else {
+        status.textContent = 'Choose a beach to continue.';
+      }
 
-    // Clear browser-restored values, then restore only a valid URL hierarchy.
-    // Use a beachId returned by getSelection() for the beach query parameter.
+      return;
+    }
+
+    const node = currentNode(index);
+
+    if (!node) {
+      status.textContent = index === 0
+        ? 'Choose a nation to get started.'
+        : placeholders[index] + ' to continue.';
+      return;
+    }
+
+    if (index === 2) {
+      const beaches = [...node].sort(
+        (a, b) => collator.compare(a.name, b.name)
+      );
+
+      fill(3, beaches.map(beach => ({
+        label: beach.name,
+        value: beach.id
+      })));
+
+      root.querySelector('#ss-beach-hint').textContent =
+        beaches.length + ' locations in ' + selects[2].value + '.';
+
+      status.textContent =
+        'Choose your beach in ' + selects[2].value + '.';
+    } else {
+      fill(
+        index + 1,
+        alphabetical(Object.keys(node)).map(name => ({
+          label: name,
+          value: name
+        }))
+      );
+
+      status.textContent = index === 0
+        ? 'Choose a region in ' + selects[0].value + '.'
+        : 'Choose a county or coastal area in ' + selects[1].value + '.';
+    }
+  }
+
+  fill(0, Object.keys(data).map(name => ({
+    label: name,
+    value: name
+  })));
+
+  selects.forEach((select, index) => {
+    select.addEventListener('change', () => changed(index));
+  });
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+
+    const selection = getSelection();
+    if (!selection || !form.reportValidity()) return;
+
+    void openBeach(selection, true);
+  });
+
+  form.addEventListener('reset', event => {
+    event.preventDefault();
+
     selects[0].value = '';
     clearAfter(0);
-    const params = new URLSearchParams(window.location.search);
-    keys.forEach((key, index) => {
-      const value = params.get(key);
-      if (!selects[index].disabled && value && [...selects[index].options].some(option => option.value === value)) {
-        selects[index].value = value;
-        changed(index);
-      }
-    });
+    reset.hidden = true;
+    status.textContent = 'Choose a nation to get started.';
+    selects[0].focus();
+  });
 
-    // Useful when connecting this component to the rest of your app.
-    window.SeaStateLocation = Object.freeze({ getSelection, count: countBeaches(data) });
-    if (/^\d/.test(root.querySelector('#ss-update-time').textContent.trim())) root.querySelector('#ss-updated').hidden = false;
-  })();
-  </script>
+  // Restore a valid location hierarchy from URL parameters.
+  selects[0].value = '';
+  clearAfter(0);
+
+  const params = new URLSearchParams(window.location.search);
+
+  keys.forEach((key, index) => {
+    const value = params.get(key);
+
+    if (
+      !selects[index].disabled &&
+      value &&
+      [...selects[index].options].some(option => option.value === value)
+    ) {
+      selects[index].value = value;
+      changed(index);
+    }
+  });
+
+  window.SeaStateLocation = Object.freeze({
+    getSelection,
+    getForecast: () => selectedForecast,
+    count: countBeaches(data)
+  });
+
+  const updateTime = root.querySelector('#ss-update-time');
+
+  if (updateTime && /^\d/.test(updateTime.textContent.trim())) {
+    root.querySelector('#ss-updated').hidden = false;
+  }
+})();
+</script>
 </body>
 </html>
