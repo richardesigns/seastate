@@ -322,8 +322,9 @@
     const columns = [
       ['Air', weather, 'temperature_2m', '°C'],
       ['Rain chance', weather, 'precipitation_probability', '%'],
-      ['Wind', weather, 'wind_speed_10m', 'mph'],
+      ['Wind speed', weather, 'wind_speed_10m', 'mph'],
       ['Gusts', weather, 'wind_gusts_10m', 'mph'],
+      ['UV index', weather, 'uv_index', ''],
       ['Waves', marine, 'wave_height', 'm'],
       ['Wave period', marine, 'wave_period', 's'],
       ['Swell', marine, 'swell_wave_height', 'm'],
@@ -360,9 +361,10 @@
 
     const headings = [
       'Time',
-      ...columns.map(([label, source, key, unit]) =>
-        label + ' (' + (source.hourly_units?.[key] || unit) + ')'
-      )
+      ...columns.map(([label, source, key, fallbackUnit]) => {
+        const unit = source.hourly_units?.[key] || fallbackUnit;
+        return unit ? `${label} (${unit})` : label;
+      })
     ];
 
     headings.forEach(label => {
