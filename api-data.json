@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-17T12:45:28.963Z",
+  "updated_at": "2026-10-17T12:56:35.218Z",
   "beaches": {
     "Gwithian": {
       "latitude": 50.17218,
@@ -7,7 +7,7 @@
       "weather": {
         "latitude": 50.17364,
         "longitude": -5.1101074,
-        "generationtime_ms": 98.86741638183594,
+        "generationtime_ms": 5.451560020446777,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -1901,7 +1901,7 @@
       "marine": {
         "latitude": 50.125008,
         "longitude": -5.2916565,
-        "generationtime_ms": 0.37491321563720703,
+        "generationtime_ms": 0.6145238876342773,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -3799,7 +3799,7 @@
       "weather": {
         "latitude": 50.11968,
         "longitude": -5.1071014,
-        "generationtime_ms": 3.0739307403564453,
+        "generationtime_ms": 2.315402030944824,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -5693,7 +5693,7 @@
       "marine": {
         "latitude": 49.958336,
         "longitude": -5.1249847,
-        "generationtime_ms": 0.6632804870605469,
+        "generationtime_ms": 0.4627704620361328,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -7591,7 +7591,7 @@
       "weather": {
         "latitude": 50.687946,
         "longitude": -3.2376404,
-        "generationtime_ms": 31.630992889404297,
+        "generationtime_ms": 6.003260612487793,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -9485,7 +9485,7 @@
       "marine": {
         "latitude": 50.708336,
         "longitude": -3.2083282,
-        "generationtime_ms": 0.5249977111816406,
+        "generationtime_ms": 0.3050565719604492,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -11383,7 +11383,7 @@
       "weather": {
         "latitude": 51.163605,
         "longitude": -4.191452,
-        "generationtime_ms": 27.678608894348145,
+        "generationtime_ms": 8.161544799804688,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -13277,7 +13277,7 @@
       "marine": {
         "latitude": 51.208336,
         "longitude": -4.2083282,
-        "generationtime_ms": 0.41937828063964844,
+        "generationtime_ms": 0.43463706970214844,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
