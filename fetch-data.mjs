@@ -1,9 +1,3 @@
-const apiKey = process.env.PRIVATE_API_KEY;
-
-if (!apiKey) {
-    throw new Error("PRIVATE_API_KEY has not been configured.");
-}
-
 import { writeFile } from "node:fs/promises";
 
 const beaches = {
