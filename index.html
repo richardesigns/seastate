@@ -285,6 +285,106 @@
     return matches.length === 1 ? matches[0][1] : null;
   }
 
+  function renderBeachImages(beach) {
+  const images = Array.isArray(beach.images) ? beach.images : [];
+  if (!images.length) return null;
+
+  const beachName = getSelection()?.beach || 'Beach';
+
+  const section = document.createElement('section');
+  section.className = 'ss-beach-images';
+  section.hidden = true;
+  section.style.marginBottom = '2rem';
+
+  const title = document.createElement('h3');
+  title.textContent = 'Sea state images';
+
+  const grid = document.createElement('div');
+  grid.style.cssText =
+    'display:grid;gap:1rem;' +
+    'grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));';
+
+  const jsonUrl = new URL('./api-data.json', document.baseURI);
+
+  [...images]
+    .filter(image =>
+      image &&
+      typeof image.path === 'string' &&
+      typeof image.forecast_time === 'string'
+    )
+    .sort((a, b) =>
+      a.forecast_time.localeCompare(b.forecast_time)
+    )
+    .forEach(image => {
+      let url;
+
+      try {
+        url = new URL(image.path, jsonUrl);
+      } catch {
+        return;
+      }
+
+      if (url.origin !== window.location.origin) return;
+
+      const date = apiDate(
+        image.forecast_time,
+        beach.weather || {}
+      );
+
+      if (!Number.isFinite(date.getTime())) return;
+
+      const time = dateFormatter.format(date) + ' UK time';
+
+      // Prevent yesterday's image being served from the browser cache.
+      url.searchParams.set(
+        'v',
+        image.generated_at || image.forecast_time
+      );
+
+      const figure = document.createElement('figure');
+      figure.style.cssText =
+        'margin:0;min-width:0;display:none;';
+
+      const img = document.createElement('img');
+      img.alt =
+        `${beachName}: AI illustration of forecast conditions for ${time}`;
+      img.decoding = 'async';
+      img.style.cssText =
+        'display:block;width:100%;aspect-ratio:16/9;' +
+        'object-fit:cover;border-radius:12px;';
+
+      const caption = document.createElement('figcaption');
+      caption.textContent =
+        time + ' · AI forecast illustration';
+      caption.style.cssText =
+        'margin-top:.5rem;font-size:.9rem;line-height:1.5;';
+
+      img.addEventListener('load', () => {
+        figure.style.display = '';
+        section.hidden = false;
+      });
+
+      // Hide missing or failed image downloads.
+      img.addEventListener('error', () => {
+        figure.remove();
+
+        if (!grid.children.length) {
+          section.remove();
+        }
+      });
+
+      figure.append(img, caption);
+      grid.append(figure);
+
+      img.src = url.href;
+    });
+
+  if (!grid.children.length) return null;
+
+  section.append(title, grid);
+  return section;
+}
+
   function renderForecast(beach, updatedAt) {
     const weather = beach.weather || {};
     const marine = beach.marine || {};
@@ -405,7 +505,14 @@
     });
 
     wrap.append(table);
-    forecastPanel.replaceChildren(heading, note, wrap);
+    const imageGallery = renderBeachImages(beach);
+
+    forecastPanel.replaceChildren(
+      ...(imageGallery ? [imageGallery] : []),
+      heading,
+      note,
+      wrap
+    );
   }
 
   async function openBeach(selection, focus = false) {
