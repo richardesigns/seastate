@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-17T13:41:03.764Z",
+  "updated_at": "2026-10-17T13:42:53.114Z",
   "beaches": {
     "Gwithian": {
       "latitude": 50.17218,
@@ -7,7 +7,7 @@
       "weather": {
         "latitude": 50.17364,
         "longitude": -5.1101074,
-        "generationtime_ms": 25.942206382751465,
+        "generationtime_ms": 42.891621589660645,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -1901,7 +1901,7 @@
       "marine": {
         "latitude": 50.125008,
         "longitude": -5.2916565,
-        "generationtime_ms": 0.3107786178588867,
+        "generationtime_ms": 0.3731250762939453,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -3791,7 +3791,41 @@
             15.4
           ]
         }
-      }
+      },
+      "images": [
+        {
+          "forecast_time": "2026-10-17T09:00",
+          "timezone": "Europe/London",
+          "path": "images/gwithian/0900.jpg",
+          "generated_at": "2026-10-17T13:43:05.860Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T12:00",
+          "timezone": "Europe/London",
+          "path": "images/gwithian/1200.jpg",
+          "generated_at": "2026-10-17T13:43:18.168Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T15:00",
+          "timezone": "Europe/London",
+          "path": "images/gwithian/1500.jpg",
+          "generated_at": "2026-10-17T13:43:35.053Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T18:00",
+          "timezone": "Europe/London",
+          "path": "images/gwithian/1800.jpg",
+          "generated_at": "2026-10-17T13:43:47.609Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        }
+      ]
     },
     "Maenporth": {
       "latitude": 50.12243,
@@ -3799,7 +3833,7 @@
       "weather": {
         "latitude": 50.11968,
         "longitude": -5.1071014,
-        "generationtime_ms": 1.821279525756836,
+        "generationtime_ms": 1.6291141510009766,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -5693,7 +5727,7 @@
       "marine": {
         "latitude": 49.958336,
         "longitude": -5.1249847,
-        "generationtime_ms": 0.5474090576171875,
+        "generationtime_ms": 0.4794597625732422,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -7583,7 +7617,41 @@
             15.4
           ]
         }
-      }
+      },
+      "images": [
+        {
+          "forecast_time": "2026-10-17T09:00",
+          "timezone": "Europe/London",
+          "path": "images/maenporth/0900.jpg",
+          "generated_at": "2026-10-17T13:44:04.483Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T12:00",
+          "timezone": "Europe/London",
+          "path": "images/maenporth/1200.jpg",
+          "generated_at": "2026-10-17T13:44:16.102Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T15:00",
+          "timezone": "Europe/London",
+          "path": "images/maenporth/1500.jpg",
+          "generated_at": "2026-10-17T13:44:27.754Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T18:00",
+          "timezone": "Europe/London",
+          "path": "images/maenporth/1800.jpg",
+          "generated_at": "2026-10-17T13:44:39.352Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        }
+      ]
     },
     "Sidmouth": {
       "latitude": 50.68227,
@@ -7591,7 +7659,7 @@
       "weather": {
         "latitude": 50.687946,
         "longitude": -3.2376404,
-        "generationtime_ms": 3.3267736434936523,
+        "generationtime_ms": 1.936197280883789,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -9485,7 +9553,7 @@
       "marine": {
         "latitude": 50.708336,
         "longitude": -3.2083282,
-        "generationtime_ms": 0.34296512603759766,
+        "generationtime_ms": 0.5106925964355469,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -11375,7 +11443,41 @@
             15.1
           ]
         }
-      }
+      },
+      "images": [
+        {
+          "forecast_time": "2026-10-17T09:00",
+          "timezone": "Europe/London",
+          "path": "images/sidmouth/0900.jpg",
+          "generated_at": "2026-10-17T13:44:51.205Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T12:00",
+          "timezone": "Europe/London",
+          "path": "images/sidmouth/1200.jpg",
+          "generated_at": "2026-10-17T13:45:02.796Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T15:00",
+          "timezone": "Europe/London",
+          "path": "images/sidmouth/1500.jpg",
+          "generated_at": "2026-10-17T13:45:14.568Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T18:00",
+          "timezone": "Europe/London",
+          "path": "images/sidmouth/1800.jpg",
+          "generated_at": "2026-10-17T13:45:26.187Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        }
+      ]
     },
     "Woolacombe": {
       "latitude": 51.17223,
@@ -11383,7 +11485,7 @@
       "weather": {
         "latitude": 51.163605,
         "longitude": -4.191452,
-        "generationtime_ms": 10.901331901550293,
+        "generationtime_ms": 5.139708518981934,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -13277,7 +13379,7 @@
       "marine": {
         "latitude": 51.208336,
         "longitude": -4.2083282,
-        "generationtime_ms": 0.3160238265991211,
+        "generationtime_ms": 0.43570995330810547,
         "utc_offset_seconds": 3600,
         "timezone": "Europe/London",
         "timezone_abbreviation": "GMT+1",
@@ -15167,7 +15269,41 @@
             15.4
           ]
         }
-      }
+      },
+      "images": [
+        {
+          "forecast_time": "2026-10-17T09:00",
+          "timezone": "Europe/London",
+          "path": "images/woolacombe/0900.jpg",
+          "generated_at": "2026-10-17T13:45:37.803Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T12:00",
+          "timezone": "Europe/London",
+          "path": "images/woolacombe/1200.jpg",
+          "generated_at": "2026-10-17T13:45:49.344Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T15:00",
+          "timezone": "Europe/London",
+          "path": "images/woolacombe/1500.jpg",
+          "generated_at": "2026-10-17T13:46:01.148Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        },
+        {
+          "forecast_time": "2026-10-17T18:00",
+          "timezone": "Europe/London",
+          "path": "images/woolacombe/1800.jpg",
+          "generated_at": "2026-10-17T13:46:12.763Z",
+          "weather_updated_at": "2026-10-17T13:42:53.114Z",
+          "ai_generated": true
+        }
+      ]
     }
   }
 }
